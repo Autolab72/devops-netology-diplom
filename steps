@@ -1,0 +1,137 @@
+apt update && apt upgrade -y
+apt install unzip
+apt install curl
+agt install git
+mkdir git && cd git/ && git init
+git clone apt git@github.com:Autolab72/devops-netology-diplom.git ## поскольку много раз переносил диплом из разных репозиториев и хостов. можно пропустить
+
+## на моем VPS предустановлена версия 3.6 , а для корректной работы Ansible и PIP нужена версия не ниже 3.8!
+apt install python3.8 ## устанавливаем необходимую версию
+update-alternatives --install /usr/bin/python python /usr/bin/python3.8 10 ## Установка по умлчанию python3.8 при вводе в командной строке python
+update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 10 ## Аналогично для python3
+python -V ## Проверяем
+
+## Устанавливаем pip
+apt-get install python3-distutils ## обычно уже установленно, но я снес "старый" python3.6 (не делайте так:)) и, похоже заодно и эту библиотеку необходимую для отработки скрипта get-pip.py
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3 get-pip.py
+python3 -m pip -V
+
+## устанавливаем Ansible
+python3 -m pip install --user ansible
+export PATH=$PATH:/root/.local/bin ## При установке у меня появилась ошибка что не прописаны скрипты, пришлось добавить их самому в $PATH добавив эту команду в .bashrc
+ansible --version
+
+
+## Установка YANDEX CLOUD CLI
+https://cloud.yandex.ru/docs/cli/quickstart#install ## guide install
+
+curl -sSL https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash  ## install
+echo 'source /root/yandex-cloud/completion.zsh.inc' >>  ~/.zshrc
+source /root/.bashrc
+https://oauth.yandex.ru/authorize?response_type=token&client_id=1a6990aa636648e9b2ef855fa7bec2fb  ## take OAuth-токен
+yc init
+yc config list
+
+## Настройка YC
+https://cloud.yandex.ru/docs/tutorials/infrastructure-management/terraform-quickstart#before-you-begin
+
+wget https://hashicorp-releases.yandexcloud.net/terraform/1.3.4/terraform_1.3.4_linux_amd64.zip 
+unzip terraform_1.3.4_linux_amd64.zip ## бинарник нужно положить в директорию /root/.local/bin/  (тудаже где и ансибл)
+
+yc iam service-account create --name master
+## id: ajekmi7r9d2du7kfqm7t
+## folder_id: b1g928koeave6upasd5v
+## created_at: "2022-11-06T21:31:46.516150107Z"
+## name: master
+
+yc iam service-account list 
+
++----------------------+--------+
+|          ID          |  NAME  |
++----------------------+--------+
+| ajekmi7r9d2du7kfqm7t | master |
++----------------------+--------+
+
+
+yc resource-manager cloud add-access-binding cloud-autolab72 \
+  --role admin \
+  --subject serviceAccount:ajekmi7r9d2du7kfqm7t
+
+### <service-name> — название сервиса, на чей ресурс назначается роль, например resource-manager.
+### <resource> — категория ресурса, например cloud.
+### <resource-name> — имя ресурса. Вы можете указать ресурс по имени или идентификатору.
+### <resource-id> — идентификатор ресурса.
+### <role-id> — назначаемая роль, например resource-manager.clouds.owner.
+### <service-account-id> — идентификатор сервисного аккаунта, которому назначается роль.
+
+
+yc iam key create \
+  --service-account-id ajekmi7r9d2du7kfqm7t \
+  --folder-name autolab72-store \
+  --output key.json
+
+### id: ajebjjigun0r8jvsu2mo
+### service_account_id: ajekmi7r9d2du7kfqm7t
+### created_at: "2022-11-06T21:35:05.702571573Z"
+### key_algorithm: RSA_2048
+
+### ВНИМАНИЕ!!! Ключ кладется в ТЕКУЩУЮ дирректорию. ОБЯЗАТЕЛЬНО добавить его в .gitignore либо вообще из директории убрать
+
+yc config profile create master_profile
+
+yc config set service-account-key key.json
+yc config set cloud-id b1gp36n72n8u99b200fa
+yc config set folder-id b1g928koeave6upasd5v
+
+export YC_TOKEN=$(yc iam create-token)
+export YC_CLOUD_ID=$(yc config get cloud-id)
+export YC_FOLDER_ID=$(yc config get folder-id)  
+
+## Настройка Terraform
+nano ~/.terraformrc
+provider_installation {
+  network_mirror {
+    url = "https://terraform-mirror.yandexcloud.net/"
+    include = ["registry.terraform.io/*/*"]
+  }
+  direct {
+    exclude = ["registry.terraform.io/*/*"]
+  }
+}
+
+nano git/devops-netology-diplom/terraform/main.tf
+terraform {
+  required_providers {
+    yandex = {
+      source = "yandex-cloud/yandex"
+    }
+  }
+  required_version = ">= 0.13"
+}
+
+provider "yandex" {
+  zone = "ru-central1-a"
+}
+
+
+terraform init
+ 
+## Создаем пользователя кладем ему ssh ключи и отключаем sudo
+nano user-data
+#cloud-config
+users:
+  - name: root
+    groups: sudo
+    shell: /bin/bash
+    sudo: ['ALL=(ALL) NOPASSWD:ALL']
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDI5gdsrK93ZPDCA5MSVMl3uvqILrWWlDj+bFp+XvYdxl1e6gPkkQ+Q0OMCNF7g07Nfnb3rJVcbMTF8thw7mtz7ueovgMu6C75xQzIu+JaSrF2C1UD7FRPo8Bf/mnuZ/NFbnK3Mlw/ziHaiqYvVe3pXEBL1q0r27$
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDInSnBm/+IbLepxV1HDJ88dZs79DZbMkeky2SJBU3b7gONq+llD6wrjAg4zcRnj4iIudwREfiKNMqWO9D5kxCc49AIkDtHLsX+QiXLf4fdADKDBFJ/3ERqkNpPi9zb4ISzVvlLXVjF/1Ru/3flLbQBFnR92wNwR$
+
+terraform plan
+terraform apply
+terraform destroy
+
+
+

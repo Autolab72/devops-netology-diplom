@@ -31,7 +31,7 @@ resource "yandex_compute_instance" "vm-1" {
   }
 
   metadata = {
-    user-data = "${file("/root/cloud-terraform/user-data")}"
+    user-data = "${file("/root/git/devops-netology-diplom/terraform/user-data")}"
   }
 }
 
@@ -55,7 +55,7 @@ resource "yandex_compute_instance" "vm-2" {
   }
 
   metadata = {
-    user-data = "${file("/root/cloud-terraform/user-data")}"
+    user-data = "${file("/root/git/devops-netology-diplom/terraform/user-data")}"
   }
 }
 
