@@ -84,9 +84,15 @@ yc config set service-account-key key.json
 yc config set cloud-id b1gp36n72n8u99b200fa
 yc config set folder-id b1g928koeave6upasd5v
 
+## Делаем скрипт с получением секретов
+nano secret_add.sh
+#!/bin/bash
+
 export YC_TOKEN=$(yc iam create-token)
 export YC_CLOUD_ID=$(yc config get cloud-id)
 export YC_FOLDER_ID=$(yc config get folder-id)  
+
+. ./secret_add.sh
 
 ## Настройка Terraform
 nano ~/.terraformrc
