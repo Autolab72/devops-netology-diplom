@@ -1,7 +1,15 @@
-apt update && apt upgrade -y
-apt install unzip
-apt install curl
-agt install git
+apt update
+
+apt install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release \
+    unzip \
+    git \
+
+apt upgrade -y
+
 mkdir git && cd git/ && git init
 git clone apt git@github.com:Autolab72/devops-netology-diplom.git ## поскольку много раз переносил диплом из разных репозиториев и хостов. можно пропустить
 
@@ -123,7 +131,7 @@ provider "yandex" {
 
 terraform init
  
-## Создаем пользователя кладем ему ssh ключи и отключаем sudo
+## Создаем пользователя
 nano user-data
 #cloud-config
 users:
@@ -140,4 +148,55 @@ terraform apply
 terraform destroy
 
 
+## Ссылки на ansible-galaxy
+https://galaxy.ansible.com/hispanico/nginx_revproxy
+ansible-galaxy install hispanico.nginx_revproxy
+
+https://galaxy.ansible.com/cloudalchemy/node_exporter
+ansible-galaxy install cloudalchemy.node_exporter
+
+https://galaxy.ansible.com/cloudalchemy/grafana
+ansible-galaxy collection install community.grafana
+
+https://galaxy.ansible.com/cloudalchemy/alertmanager
+ansible-galaxy install cloudalchemy.alertmanager
+
+https://galaxy.ansible.com/cloudalchemy/prometheus
+
+
+
+
+
+
+# Docker
+## Установка Docker engine
+https://docs.docker.com/engine/install/ubuntu/
+
+### Add Docker’s official GPG key:
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+### Use the following command to set up the repository:
+
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+#### Если нужно установить последнюю версию:
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+#### Если нужно установить конкретную версию:
+ List the available versions:
+ apt-cache madison docker-ce | awk '{ print $3 }'
+
+##### Выберите нужную версию и установите:
+ VERSION_STRING=5:20.10.13~3-0~ubuntu-jammy
+ sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-compose-plugin
+
+##### Убедитесь, что установка Docker Engine прошла успешно, запустив hello-worldобраз:
+ sudo docker run hello-world
+
+# Установка docker-compose
+apt-get install docker-compose-plugin
+docker compose version
 
