@@ -34,7 +34,7 @@ resource "yandex_compute_instance" "vm-1" {
     user-data = "${file("/root/git/devops-netology-diplom/terraform/user-data")}"
   }
 
-  
+    
 
 }
 

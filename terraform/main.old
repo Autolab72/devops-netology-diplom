@@ -12,7 +12,7 @@ provider "yandex" {
 }
 
 resource "yandex_compute_instance" "vm-1" {
-  name = "stage"
+  name = "terraform1"
 
   resources {
     cores  = 2
@@ -39,7 +39,7 @@ resource "yandex_compute_instance" "vm-1" {
 }
 
 resource "yandex_compute_instance" "vm-2" {
-  name = "prod"
+  name = "terraform2"
 
   resources {
     cores  = 2
